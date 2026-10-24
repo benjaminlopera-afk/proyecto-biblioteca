@@ -1,0 +1,8 @@
+postgres/data/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.docx
+*.pdf
