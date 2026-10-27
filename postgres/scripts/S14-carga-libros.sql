@@ -91,9 +91,9 @@ UPDATE carga.stg_libro SET motivo = CASE
     WHEN autor = ''                                  THEN 'autor vacío'
     WHEN categoria = ''                              THEN 'categoría vacía'
     WHEN anio_publicacion !~ '^[0-9]{1,4}$'          THEN 'año no numérico'
-    WHEN anio_publicacion::integer
-         NOT BETWEEN 1450 AND extract(year FROM current_date)::integer
-                                                     THEN 'año fuera de rango'
+    WHEN anio_publicacion::integer 
+         NOT BETWEEN 1450 AND extract(year FROM current_date)::integer 
+                                                    THEN 'año fuera de rango'
     WHEN ejemplares_disponibles !~ '^-?[0-9]{1,4}$'  THEN 'ejemplares no numérico'
     WHEN ejemplares_disponibles::integer < 0         THEN 'ejemplares negativo'
     WHEN EXISTS (SELECT 1 FROM "LIBRO" l
