@@ -1,11 +1,25 @@
+-- =====================================================================
+-- 01_esquema.sql  ·  esquema del proyecto biblioteca
+-- Se ejecuta solo, una vez, cuando la base de Postgres se crea vacía.
+--
+-- Ajustes para la carga S14 respecto al esquema original:
+--   * pgcrypto: para guardar la contraseña inicial de los lectores con hash
+--   * UNIQUE en CATEGORIA.nombre y AUTOR.nombre: la carga se puede repetir
+--     sin duplicar categorías ni autores
+--   * CHECKs en LIBRO: última línea de defensa tras las reglas del CASE
+--     de carga-libros.sql
+-- =====================================================================
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE "CATEGORIA" (
   "id_categoria" varchar PRIMARY KEY,
-  "nombre" varchar NOT NULL
+  "nombre" varchar UNIQUE NOT NULL
 );
 
 CREATE TABLE "AUTOR" (
   "id_autor" varchar PRIMARY KEY,
-  "nombre" varchar NOT NULL,
+  "nombre" varchar UNIQUE NOT NULL,
   "nacionalidad" varchar
 );
 
@@ -14,7 +28,10 @@ CREATE TABLE "LIBRO" (
   "id_categoria" varchar NOT NULL,
   "titulo" varchar NOT NULL,
   "editorial" varchar,
-  "ano_publicacion" int
+  "ano_publicacion" int,
+  CONSTRAINT "chk_libro_isbn" CHECK ("ISBN" ~ '^[0-9]{13}$'),
+  CONSTRAINT "chk_libro_titulo" CHECK (btrim("titulo") <> ''),
+  CONSTRAINT "chk_libro_ano" CHECK ("ano_publicacion" BETWEEN 1450 AND 2100)
 );
 
 CREATE TABLE "LIBRO_AUTOR" (
