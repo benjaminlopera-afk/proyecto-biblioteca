@@ -1,5 +1,11 @@
 # Informe S14 · Esquema PostgreSQL y carga de datos desde CSV
 
+## Autores:
+Juan Pablo Lozano Restrepo - 202521505
+Sebastián Martínez cabrera - 2519817
+Benjamin Lopera - 2515144
+Jhonny Alexander Moreno - 2522112
+
 Avance del **Hito 2** (entrega final en S16): esquema como script de arranque, carga de libros y lectores desde los CSV semilla del curso (incluidos los archivos con errores) y CSV propio con prueba de la última línea de defensa.
 
 | Campo | Detalle |
