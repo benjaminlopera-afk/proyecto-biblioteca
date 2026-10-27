@@ -1,0 +1,9 @@
+documento,nombres,apellidos,correo,telefono
+1001002001,Andres,Gomez,andres.gomez@test.com,3001234567
+1001002002,Beatriz,Lopez,beatriz.lopez@test.com,3002345678
+1001002003,Camilo,Ruiz,camilo.ruiz@test.com,3003456789
+1001002004,Daniela,Morales,daniela.morales@test.com,3004567890
+1001002005,Esteban,Rios,esteban.rios@test.com,3005678901
+1001002006,Fernanda,Perez,ANDRES.GOMEZ@TEST.COM,3006789012
+1001002007,Gabriel,Silva,gabriel.silva@test.com,300789012a
+1001002008;Hugo;Vargas;hugo.vargas@test.com;3008901234
