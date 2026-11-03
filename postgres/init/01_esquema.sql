@@ -71,6 +71,7 @@ CREATE TABLE prestamo (
   "ISBN" varchar NOT NULL,
   "num_ejemplar" varchar NOT NULL,
   "id_usuario" varchar NOT NULL,
+  "id_bibliotecario" varchar NOT NULL,
   "fecha_prestamo" date NOT NULL,
   "fecha_pactada" date NOT NULL,
   "fecha_real" date,
@@ -92,3 +93,5 @@ ALTER TABLE ejemplar ADD FOREIGN KEY ("ISBN") REFERENCES biblioteca.libro ("ISBN
 ALTER TABLE prestamo ADD FOREIGN KEY ("id_usuario") REFERENCES biblioteca.usuario ("id_usuario") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE prestamo ADD FOREIGN KEY ("ISBN", "num_ejemplar") REFERENCES biblioteca.ejemplar ("ISBN", "num_ejemplar") DEFERRABLE INITIALLY IMMEDIATE;
+
+ALTER TABLE prestamo ADD FOREIGN KEY ("id_bibliotecario") REFERENCES biblioteca.usuario ("id_usuario") DEFERRABLE INITIALLY IMMEDIATE;
