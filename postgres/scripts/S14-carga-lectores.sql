@@ -1,5 +1,5 @@
 -- carga-lectores.sql
--- Carga de lectores desde CSV adaptada al esquema biblioteca-v2 / 01_esquema.sql
+-- Carga de lectores desde CSV adaptada al esquema  01_esquema.sql
 
 \set ON_ERROR_STOP on
 
@@ -10,7 +10,7 @@
 
 BEGIN;
 
-SET search_path TO carga;
+SET search_path TO carga, biblioteca, public;
 
 -- Se decide crear las tablas de paso y la bitacoras de rechazo
 CREATE UNLOGGED TABLE IF NOT EXISTS stg_linea (
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS rechazo_carga (
 TRUNCATE stg_linea, stg_lector RESTART IDENTITY;
 
 -- Asegurar la existencia del rol 'LECTOR' en la tabla ROL
-INSERT INTO "ROL" ("id_rol", "nombre_rol")
+INSERT INTO biblioteca.rol ("id_rol", "nombre_rol")
 VALUES ('LECTOR', 'Lector')
 ON CONFLICT ("id_rol") DO NOTHING;
 
@@ -94,7 +94,7 @@ SELECT documento,
        nombres || ' ' || apellidos,
        correo,
        telefono,
-       documento -- Clave inicial provisional equivalente al documento
+       crypt(documento, gen_salt('bf')) -- Clave inicial provisional equivalente al documento
 FROM stg_lector
 WHERE motivo IS NULL;
 

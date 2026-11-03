@@ -10,6 +10,10 @@
 --     de carga-libros.sql
 -- =====================================================================
 
+-- Creación del esquema y configuración de búsqueda
+CREATE SCHEMA IF NOT EXISTS biblioteca;
+SET search_path TO biblioteca, public;
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE categoria (
@@ -48,6 +52,11 @@ CREATE TABLE ejemplar (
   PRIMARY KEY ("ISBN", "num_ejemplar")
 );
 
+CREATE TABLE rol (
+  "id_rol" varchar PRIMARY KEY,
+  "nombre_rol" varchar UNIQUE NOT NULL
+);
+
 CREATE TABLE usuario (
   "id_usuario" varchar PRIMARY KEY,
   "id_rol" varchar NOT NULL,
@@ -68,21 +77,18 @@ CREATE TABLE prestamo (
   "estado_mora" varchar
 );
 
-CREATE TABLE rol (
-  "id_rol" varchar PRIMARY KEY,
-  "nombre_rol" varchar UNIQUE NOT NULL
-);
 
-ALTER TABLE libro ADD FOREIGN KEY ("id_categoria") REFERENCES "CATEGORIA" ("id_categoria") DEFERRABLE INITIALLY IMMEDIATE;
+-- Corregidas las referencias a mminusculas en el esquema 
+ALTER TABLE libro ADD FOREIGN KEY ("id_categoria") REFERENCES biblioteca.categoria ("id_categoria") DEFERRABLE INITIALLY IMMEDIATE;
 
-ALTER TABLE usuario ADD FOREIGN KEY ("id_rol") REFERENCES "ROL" ("id_rol") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE usuario ADD FOREIGN KEY ("id_rol") REFERENCES biblioteca.rol ("id_rol") DEFERRABLE INITIALLY IMMEDIATE;
 
-ALTER TABLE libro_autor ADD FOREIGN KEY ("ISBN") REFERENCES libro ("ISBN") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE libro_autor ADD FOREIGN KEY ("ISBN") REFERENCES biblioteca.libro ("ISBN") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
 
-ALTER TABLE libro_autor ADD FOREIGN KEY ("id_autor") REFERENCES "AUTOR" ("id_autor") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE libro_autor ADD FOREIGN KEY ("id_autor") REFERENCES biblioteca.autor ("id_autor") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
 
-ALTER TABLE ejemplar ADD FOREIGN KEY ("ISBN") REFERENCES libro ("ISBN") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE ejemplar ADD FOREIGN KEY ("ISBN") REFERENCES biblioteca.libro ("ISBN") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
 
-ALTER TABLE prestamo ADD FOREIGN KEY ("id_usuario") REFERENCES usuario ("id_usuario") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE prestamo ADD FOREIGN KEY ("id_usuario") REFERENCES biblioteca.usuario ("id_usuario") DEFERRABLE INITIALLY IMMEDIATE;
 
-ALTER TABLE prestamo ADD FOREIGN KEY ("ISBN", "num_ejemplar") REFERENCES ejemplar ("ISBN", "num_ejemplar") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE prestamo ADD FOREIGN KEY ("ISBN", "num_ejemplar") REFERENCES biblioteca.ejemplar ("ISBN", "num_ejemplar") DEFERRABLE INITIALLY IMMEDIATE;
