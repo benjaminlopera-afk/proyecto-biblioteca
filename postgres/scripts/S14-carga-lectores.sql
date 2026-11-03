@@ -10,6 +10,8 @@
 
 BEGIN;
 
+SET search_path TO carga;
+
 -- Se decide crear las tablas de paso y la bitacoras de rechazo
 CREATE UNLOGGED TABLE IF NOT EXISTS stg_linea (
     n integer GENERATED ALWAYS AS IDENTITY,
@@ -71,9 +73,9 @@ UPDATE stg_lector SET motivo = CASE
     WHEN correo = ''                              THEN 'correo vacío'
     WHEN correo !~ '^[^@ ]+@[^@ ]+\.[^@ ]+$'      THEN 'correo mal formado'
     WHEN telefono !~ '^[0-9]{7,15}$'              THEN 'teléfono no numérico o de longitud inválida'
-    WHEN EXISTS (SELECT 1 FROM "USUARIO" u WHERE u."id_usuario" = stg_lector.documento)
+    WHEN EXISTS (SELECT 1 FROM biblioteca.usuario u WHERE u."id_usuario" = stg_lector.documento)
                                                   THEN 'documento ya existe'
-    WHEN EXISTS (SELECT 1 FROM "USUARIO" u WHERE u."correo" = stg_lector.correo)
+    WHEN EXISTS (SELECT 1 FROM biblioteca.usuario u WHERE u."correo" = stg_lector.correo)
                                                   THEN 'correo ya registrado por otro usuario'
 END;
 
@@ -86,7 +88,7 @@ WHERE motivo IS NULL
                 AND s2.linea_csv < stg_lector.linea_csv);
 
 -- Se insertan las filas validas a la tabla final 
-INSERT INTO "USUARIO" ("id_usuario", "id_rol", "nombre", "correo", "telefono", "contrasena")
+INSERT INTO biblioteca.usuario ("id_usuario", "id_rol", "nombre", "correo", "telefono", "contrasena")
 SELECT documento,
        'LECTOR',
        nombres || ' ' || apellidos,

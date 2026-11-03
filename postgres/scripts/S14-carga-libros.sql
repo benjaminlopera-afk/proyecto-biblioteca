@@ -20,6 +20,8 @@
   \set archivo '/scripts/datos/libros_semilla.csv'
 \endif
 
+SET search_path TO carga;
+
 -- ---------------------------------------------------------------------
 -- Objetos de apoyo, en un esquema aparte para no mezclarlos con el modelo.
 -- La bitácora es compartida con la carga de lectores.
@@ -116,43 +118,43 @@ WHERE s.motivo IS NULL
 -- continúan desde el mayor que ya exista, así la carga se puede repetir.
 
 -- 5a. Categorías nuevas
-INSERT INTO "CATEGORIA" (id_categoria, nombre)
+INSERT INTO biblioteca.categoria (id_categoria, nombre)
 SELECT 'CAT-' || lpad((m.max_n + row_number() OVER (ORDER BY n.categoria))::text, 3, '0'),
        n.categoria
 FROM (SELECT DISTINCT s.categoria
       FROM carga.stg_libro s
       WHERE s.motivo IS NULL
-        AND NOT EXISTS (SELECT 1 FROM "CATEGORIA" c WHERE c.nombre = s.categoria)) n
+        AND NOT EXISTS (SELECT 1 FROM biblioteca.categoria c WHERE c.nombre = s.categoria)) n
 CROSS JOIN (SELECT COALESCE(max(substring(id_categoria FROM '[0-9]+$')::integer), 0) AS max_n
-            FROM "CATEGORIA") m;
+            FROM biblioteca.categoria) m;
 
 -- 5b. Autores nuevos (nacionalidad no viene en el CSV: queda NULL)
-INSERT INTO "AUTOR" (id_autor, nombre)
+INSERT INTO biblioteca.autor (id_autor, nombre)
 SELECT 'AUT-' || lpad((m.max_n + row_number() OVER (ORDER BY n.autor))::text, 4, '0'),
        n.autor
 FROM (SELECT DISTINCT s.autor
       FROM carga.stg_libro s
       WHERE s.motivo IS NULL
-        AND NOT EXISTS (SELECT 1 FROM "AUTOR" a WHERE a.nombre = s.autor)) n
+        AND NOT EXISTS (SELECT 1 FROM biblioteca.autor a WHERE a.nombre = s.autor)) n
 CROSS JOIN (SELECT COALESCE(max(substring(id_autor FROM '[0-9]+$')::integer), 0) AS max_n
-            FROM "AUTOR") m;
+            FROM biblioteca.autor) m;
 
 -- 5c. Libros (editorial no viene en el CSV: queda NULL)
-INSERT INTO "LIBRO" ("ISBN", id_categoria, titulo, ano_publicacion)
+INSERT INTO biblioteca.libro ("ISBN", id_categoria, titulo, ano_publicacion)
 SELECT s.isbn, c.id_categoria, s.titulo, s.anio_publicacion::integer
 FROM carga.stg_libro s
-JOIN "CATEGORIA" c ON c.nombre = s.categoria
+JOIN biblioteca.categoria c ON c.nombre = s.categoria
 WHERE s.motivo IS NULL;
 
 -- 5d. Relación libro-autor
-INSERT INTO "LIBRO_AUTOR" ("ISBN", id_autor)
+INSERT INTO biblioteca.libro_autor ("ISBN", id_autor)
 SELECT s.isbn, a.id_autor
 FROM carga.stg_libro s
-JOIN "AUTOR" a ON a.nombre = s.autor
+JOIN biblioteca.autor a ON a.nombre = s.autor
 WHERE s.motivo IS NULL;
 
 -- 5e. Ejemplares: ejemplares_disponibles = n  ->  n filas (1..n)
-INSERT INTO "EJEMPLAR" ("ISBN", num_ejemplar, estado)
+INSERT INTO biblioteca.ejemplar ("ISBN", num_ejemplar, estado)
 SELECT s.isbn, g.n::text, 'disponible'
 FROM carga.stg_libro s
 CROSS JOIN LATERAL generate_series(1, s.ejemplares_disponibles::integer) AS g(n)
