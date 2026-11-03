@@ -84,6 +84,7 @@ FROM carga.stg_linea;
 -- Paso 3. Validar. El CASE se detiene en la primera regla que falla;
 -- sin ELSE devuelve NULL (la fila pasó). El ORDEN IMPORTA: cada ::integer
 -- va después de la regla que comprueba que el texto son dígitos.
+-- Correccion de la referencia de "LIBRO" a "biblioteca.libro" para que la validación funcione correctamente
 UPDATE carga.stg_libro SET motivo = CASE
     WHEN num_campos <> 6
          THEN 'tiene ' || num_campos || ' columnas, se esperaban 6'
@@ -98,7 +99,7 @@ UPDATE carga.stg_libro SET motivo = CASE
                                                     THEN 'año fuera de rango'
     WHEN ejemplares_disponibles !~ '^-?[0-9]{1,4}$'  THEN 'ejemplares no numérico'
     WHEN ejemplares_disponibles::integer < 0         THEN 'ejemplares negativo'
-    WHEN EXISTS (SELECT 1 FROM "LIBRO" l
+    WHEN EXISTS (SELECT 1 FROM biblioteca.libro l
                  WHERE l."ISBN" = carga.stg_libro.isbn)
                                                      THEN 'isbn ya existe en el catálogo'
 END;
