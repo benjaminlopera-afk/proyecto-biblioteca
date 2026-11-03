@@ -95,3 +95,11 @@ ALTER TABLE prestamo ADD FOREIGN KEY ("id_usuario") REFERENCES biblioteca.usuari
 ALTER TABLE prestamo ADD FOREIGN KEY ("ISBN", "num_ejemplar") REFERENCES biblioteca.ejemplar ("ISBN", "num_ejemplar") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE prestamo ADD FOREIGN KEY ("id_bibliotecario") REFERENCES biblioteca.usuario ("id_usuario") DEFERRABLE INITIALLY IMMEDIATE;
+
+-- Inserción inicial de roles del sistema
+INSERT INTO biblioteca.rol ("id_rol", "nombre_rol") VALUES
+  ('ADMIN', 'Administrador'),
+  ('BIBLIO', 'Bibliotecario'),
+  ('LECTOR', 'Lector'),
+  ('AUDITOR', 'Auditor')
+ON CONFLICT ("id_rol") DO NOTHING;

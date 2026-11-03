@@ -10,6 +10,7 @@
 
 BEGIN;
 
+CREATE SCHEMA IF NOT EXISTS carga;
 SET search_path TO carga, biblioteca, public;
 
 -- Se decide crear las tablas de paso y la bitacoras de rechazo
@@ -94,7 +95,7 @@ SELECT documento,
        nombres || ' ' || apellidos,
        correo,
        telefono,
-       crypt(documento, gen_salt('bf')) -- Clave inicial provisional equivalente al documento
+       crypt(documento, gen_salt('bf')) -- Clave inicial provisional equivalente al documento, encriptada con bcrypt
 FROM stg_lector
 WHERE motivo IS NULL;
 
