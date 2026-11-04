@@ -1,29 +1,96 @@
+# Entorno compartido del proyecto: PostgreSQL + MongoDB + pgAdmin
+#
+# Pensado para desarrollo/docencia: credenciales simples con valores por
+# defecto, todo corre en localhost, y las carpetas que monta cada servicio
+# (postgres/, pgadmin/, mongo/) son la parte que un estudiante necesita
+# tocar. Ver README.md de este directorio para el uso.
+#
+# Servicios:
+#   - postgres: base de datos principal del proyecto (esquema cargado por
+#     ./postgres/init/ en la primera creación).
+#   - mongo:    base de datos secundaria (si el proyecto la usa).
+#   - pgadmin:  panel web en http://localhost:5050 para administrar PostgreSQL.
+#               La primera vez pedirá la contraseña de la conexión (por
+#               defecto: curso) y luego la recuerda gracias al archivo
+#               ./pgadmin/servers.json.
+
 services:
   postgres:
     image: postgres:16
-    container_name: postgres_curso
+    container_name: biblioteca_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: curso
-      POSTGRES_PASSWORD: curso
-      POSTGRES_DB: curso
+      POSTGRES_USER: ${POSTGRES_USER:-curso}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-curso}
+      POSTGRES_DB: ${POSTGRES_DB:-curso}
+      # initdb exige que su directorio de datos esté realmente vacío; un
+      # bind mount casi nunca lo está del todo (aunque sea solo un .gitkeep),
+      # y eso hace fallar la inicialización. La imagen oficial recomienda
+      # apuntar PGDATA a un subdirectorio del punto de montaje, que Postgres
+      # crea él mismo ya genuinamente vacío.
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${PGPORT:-5432}:5432"
     volumes:
+      # Datos de la base de datos: persisten entre "docker compose down/up".
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/scripts:/scripts
-      - ./postgres/init:/docker-entrypoint-initdb.d
+      # Scripts que se ejecutan UNA sola vez, en orden alfabético, la primera
+      # vez que se crea la base (carpeta de datos vacía). Ideal para el
+      # esquema + datos semilla de cada práctica.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      # Scripts sueltos para correr a mano cuantas veces se quiera con psql,
+      # sin que se disparen automáticamente.
+      - ./postgres/scripts:/scripts:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-curso} -d ${POSTGRES_DB:-curso}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   mongo:
     image: mongo:7
-    container_name: mongo_curso
+    container_name: curso_mongo
+    restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: curso
-      MONGO_INITDB_ROOT_PASSWORD: curso
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-curso}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-curso}
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
+      # Datos de MongoDB: persisten entre "docker compose down/up".
       - mongo_data:/data/db
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: biblioteca_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@curso.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-curso}
+      PGADMIN_LISTEN_PORT: 80
+      # Modo "desktop" simplificado: sin pantalla de login aparte ni master
+      # password extra para guardar la contraseña del servidor. Menos pasos
+      # para el estudiante; no usar esta configuración fuera del curso.
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      # Configuración y conexiones guardadas de pgAdmin: persisten entre
+      # reinicios. Volumen nombrado (no una carpeta del host): la imagen de
+      # pgAdmin corre como usuario no-root fijo y, a diferencia de la de
+      # Postgres, no ajusta permisos de una carpeta bind-mounteada del host,
+      # así que un bind mount aquí falla con "Permission denied". No hay
+      # nada en estos archivos que un estudiante necesite editar a mano.
+      - pgadmin_data:/var/lib/pgadmin
+      # Precarga la conexión al servidor "postgres" para que no haya que
+      # crearla a mano la primera vez (solo pide la contraseña una vez).
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   mongo_data:
+  pgadmin_data:
