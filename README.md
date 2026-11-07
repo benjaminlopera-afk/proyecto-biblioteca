@@ -278,17 +278,17 @@ docker compose up -d postgres
 # 2. Ejecutar carga masiva de Lectores (Semilla, Errores y Propio)
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_semilla.csv -f /scripts/S14-carga-lectores.sql
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_semilla_con_errores.csv -f /scripts/S14-carga-lectores.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_propio_2.csv -f /scripts/S14-carga-lectores.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_propio.csv -f /scripts/S14-carga-lectores.sql
 
 # 3. Ejecutar carga masiva de Libros (Semilla, Errores y Propio)
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_semilla.csv -f /scripts/S14-carga-libros.sql
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_semilla_con_errores.csv -f /scripts/S14-carga-libros.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_propio_2.csv -f /scripts/S14-carga-libros.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_propio.csv -f /scripts/S14-carga-libros.sql
 
 # 4. Ejecutar carga masiva de Préstamos (Semilla, Errores y Propio)
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_semilla.csv -f /scripts/S15-carga-prestamos.sql
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_semilla_con_erorres.csv -f /scripts/S15-carga-prestamos.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_propios_2.csv -f /scripts/S15-carga-prestamos.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_propio.csv -f /scripts/S15-carga-prestamos.sql
 
 # 5. Generar la suite de reportes de negocio
 docker compose exec postgres psql -U curso -d curso -P pager=off -f /scripts/S15-reportes.sql
