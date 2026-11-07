@@ -51,25 +51,28 @@ WHERE  EXISTS (
     FROM   biblioteca.prestamo p
     WHERE  p.id_usuario = u.id_usuario
       AND  p.fecha_real IS NULL
-      AND  p.estado_mora = 'SI'
+      AND  (p.fecha_pactada < CURRENT_DATE OR p.estado_mora IN ('Con mora', 'SI'))
 )
 ORDER BY u.nombre;
 
 \echo
 \echo '== Reporte 4. Préstamos en mora (para la lista de notificación) =='
-SELECT u.nombre               AS lector,
+SELECT u.nombre                         AS lector,
        u.correo,
        u.telefono,
        l.titulo,
        p.num_ejemplar,
        p.fecha_pactada,
-       p.fecha_real,
-       p.estado_mora
+       (CURRENT_DATE - p.fecha_pactada) AS dias_mora,
+       CASE 
+           WHEN p.fecha_pactada < CURRENT_DATE AND p.fecha_real IS NULL THEN 'Con mora'
+           ELSE p.estado_mora
+       END                              AS estado_mora
 FROM   biblioteca.prestamo p
 JOIN   biblioteca.usuario u
        ON u.id_usuario = p.id_usuario
 JOIN   biblioteca.libro l
        ON l."ISBN" = p."ISBN"
-WHERE  p.estado_mora = 'SI'
-  AND  p.fecha_real IS NULL
+WHERE  p.fecha_real IS NULL
+  AND  (p.fecha_pactada < CURRENT_DATE OR p.estado_mora IN ('Con mora', 'SI'))
 ORDER BY p.fecha_pactada;

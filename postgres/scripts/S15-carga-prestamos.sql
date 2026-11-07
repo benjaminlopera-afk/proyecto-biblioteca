@@ -1,3 +1,19 @@
+CREATE SCHEMA IF NOT EXISTS carga;
+
+CREATE TABLE IF NOT EXISTS carga.stg_prestamo (
+    linea_csv      integer,
+    contenido      text,
+    num_campos     integer,
+    id_prestamo    text,
+    isbn           text,
+    num_ejemplar   text,
+    documento      text,
+    fecha_prestamo text,
+    fecha_pactada  text,
+    fecha_real     text,
+    estado_mora    text,
+    motivo         text
+);
 
 TRUNCATE carga.stg_linea RESTART IDENTITY;
 TRUNCATE carga.stg_prestamo;
@@ -61,12 +77,13 @@ WHERE s.motivo IS NULL
                 AND p.linea_csv < s.linea_csv);
 
 -- Paso 5. Inserción de filas válidas en biblioteca.prestamo
-INSERT INTO biblioteca.prestamo ("id_prestamo", "ISBN", "num_ejemplar", "id_usuario",
+INSERT INTO biblioteca.prestamo ("id_prestamo", "ISBN", "num_ejemplar", "id_usuario", "id_bibliotecario",
                                  "fecha_prestamo", "fecha_pactada", "fecha_real", "estado_mora")
 SELECT id_prestamo,
        isbn,
        num_ejemplar,
        documento,
+       'BIBLIO-001', -- Asigna el ID del bibliotecario creado en el Paso 1
        fecha_prestamo::date,
        fecha_pactada::date,
        NULLIF(fecha_real, '')::date,
