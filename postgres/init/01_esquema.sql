@@ -103,3 +103,15 @@ INSERT INTO biblioteca.rol ("id_rol", "nombre_rol") VALUES
   ('LECTOR', 'Lector'),
   ('AUDITOR', 'Auditor')
 ON CONFLICT ("id_rol") DO NOTHING;
+
+-- Usuario bibliotecario por defecto para auditoría del sistema
+INSERT INTO biblioteca.usuario ("id_usuario", "id_rol", "nombre", "correo", "telefono", "contrasena")
+VALUES (
+  'BIBLIO-001',
+  'BIBLIO',
+  'Bibliotecario de Turno',
+  'biblioteca@gmail.com',
+  '3000000000',
+  crypt('admin123', gen_salt('bf'))
+)
+ON CONFLICT ("id_usuario") DO NOTHING;
