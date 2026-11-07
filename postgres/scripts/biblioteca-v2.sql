@@ -1,3 +1,5 @@
+SET search_path TO biblioteca, public;
+
 CREATE TABLE categoria (
   "id_categoria" varchar PRIMARY KEY,
   "nombre" varchar NOT NULL
