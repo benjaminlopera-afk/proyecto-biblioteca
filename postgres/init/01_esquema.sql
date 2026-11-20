@@ -79,7 +79,7 @@ CREATE TABLE prestamo (
 );
 
 
--- Corregidas las referencias a mminusculas en el esquema 
+-- Corregidas las referencias a minúsculas en el esquema 
 ALTER TABLE libro ADD FOREIGN KEY ("id_categoria") REFERENCES biblioteca.categoria ("id_categoria") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE usuario ADD FOREIGN KEY ("id_rol") REFERENCES biblioteca.rol ("id_rol") DEFERRABLE INITIALLY IMMEDIATE;
