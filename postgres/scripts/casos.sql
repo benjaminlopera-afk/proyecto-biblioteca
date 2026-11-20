@@ -59,47 +59,14 @@ GROUP BY plan;
 
 /* 
 (c) Correccion del esquema original: 
-Se opto por crear las tablas plan, clase y la relacion socio clase para separar adecuadamente los valores.
+Se opto por crear las tablas plan, clase, horario_clase y la relacion socio_clase
+para separar adecuadamente los valores:
+  plan          (nombre_plan PK, valor_plan)
+  socio         (id_socio PK, nombre, nombre_plan -> plan)
+  clase         (id_clase PK, nombre_clase UNIQUE)
+  socio_clase   (id_socio -> socio, id_clase -> clase)   PK (id_socio, id_clase)
+  horario_clase (id_horario PK, id_clase -> clase, dia, hora)
 */
-
-
-SET search_path TO gimnasio;
-
--- Tabla de planes
-CREATE TABLE plan (
-    nombre_plan VARCHAR(20) PRIMARY KEY,
-    valor_plan INTEGER NOT NULL
-);
-
--- Tabla de socios
-CREATE TABLE socio (
-    id_socio INTEGER PRIMARY KEY,
-    nombre VARCHAR(80) NOT NULL,
-    nombre_plan VARCHAR(20) NOT NULL,
-
-    FOREIGN KEY (nombre_plan)
-        REFERENCES plan(nombre_plan)
-);
-
--- Tabla de clases
-CREATE TABLE clase (
-    id_clase INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre_clase VARCHAR(80) NOT NULL UNIQUE
-);
-
--- Tabla intermedia: relación socios y clases
-CREATE TABLE socio_clase (
-    id_socio INTEGER NOT NULL,
-    id_clase INTEGER NOT NULL,
-
-    PRIMARY KEY (id_socio, id_clase),
-
-    FOREIGN KEY (id_socio)
-        REFERENCES socio(id_socio),
-
-    FOREIGN KEY (id_clase)
-        REFERENCES clase(id_clase)
-);
 
 
 /*
@@ -496,6 +463,7 @@ ORDER BY filas DESC, cod_curso;
 -- clave en la tabla original, que tiene 8 filas):
 --   sedes = 2 , cursos = 3 , participantes = 4 , inscripciones = 7
 --   (8 filas - 1 repetida = 7: Juliana Rey en Fotografía digital, ids 3 y 7)
+DROP TABLE IF EXISTS esperados;
 CREATE TEMP TABLE esperados AS
 SELECT (SELECT count(DISTINCT cod_sede)                       FROM inscripcion) AS sedes,
        (SELECT count(DISTINCT cod_curso)                      FROM inscripcion) AS cursos,
@@ -792,6 +760,7 @@ ORDER BY envios DESC, ciudad_destino;
 -- Conteos esperados, calculados ANTES de tocar nada (valores distintos de cada
 -- clave en la tabla original, que tiene 8 filas):
 --   zonas = 3 , ciudades = 5 , envios = 8
+DROP TABLE IF EXISTS esperados;
 CREATE TEMP TABLE esperados AS
 SELECT (SELECT count(DISTINCT zona)           FROM envio) AS zonas,
        (SELECT count(DISTINCT ciudad_destino) FROM envio) AS ciudades,
@@ -945,6 +914,7 @@ DROP VIEW auditoria_c4;
 DROP TABLE envio_viejo;
 
 COMMIT;
+DROP TABLE IF EXISTS esperados;
 
 
 -- =============================================================================
