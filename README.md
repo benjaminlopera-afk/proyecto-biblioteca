@@ -85,7 +85,7 @@ docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/pr
 Para inspeccionar las filas rechazadas registradas en la bitácora:
 
 ```bash
-docker compose exec postgres psql -U curso -d curso -c "SELECT archivo, linea, motivo FROM carga.rechazo_carga ORDER BY id;"
+docker compose exec postgres psql -U curso -d curso -c "SELECT archivo, linea, motivo FROM carga.rechazo_carga ORDER BY id_rechazo;"
 ```
 
 ### Paso 3 · Ejecutar la suite de reportes de negocio
