@@ -1,13 +1,16 @@
 -- =====================================================================
--- 01_esquema.sql  ·  esquema del proyecto biblioteca
+-- 01_esquema.sql  ·  esquema del proyecto biblioteca (normalizado - Hito 3)
 -- Se ejecuta solo, una vez, cuando la base de Postgres se crea vacía.
 --
--- Ajustes para la carga S14 respecto al esquema original:
+-- Ajustes S14 y Hito 3 (S20):
 --   * pgcrypto: para guardar la contraseña inicial de los lectores con hash
---   * UNIQUE en CATEGORIA.nombre y AUTOR.nombre: la carga se puede repetir
---     sin duplicar categorías ni autores
---   * CHECKs en LIBRO: última línea de defensa tras las reglas del CASE
---     de carga-libros.sql
+--   * UNIQUE en categoria.nombre y autor.nombre: carga idempotente
+--   * CHECKs en libro y ejemplar (condición física controlada)
+--   * prestamo en FNBC: se elimina el dato derivado estado_mora (expuesto
+--     mediante biblioteca.vista_prestamo), se blinda la clave natural alterna
+--     ("ISBN", "num_ejemplar", "fecha_prestamo") y se impiden préstamos
+--     abiertos simultáneos sobre el mismo ejemplar con un índice único parcial
+--   * Índices sobre claves foráneas frecuentes (rendimiento sin redundancia)
 -- =====================================================================
 
 -- Creación del esquema y configuración de búsqueda
@@ -49,7 +52,8 @@ CREATE TABLE ejemplar (
   "num_ejemplar" varchar,
   "estado" varchar NOT NULL,
   "ubicacion" varchar,
-  PRIMARY KEY ("ISBN", "num_ejemplar")
+  PRIMARY KEY ("ISBN", "num_ejemplar"),
+  CONSTRAINT "chk_ejemplar_estado" CHECK ("estado" IN ('bueno', 'regular', 'dañado', 'en reparación'))
 );
 
 CREATE TABLE rol (
@@ -75,11 +79,12 @@ CREATE TABLE prestamo (
   "fecha_prestamo" date NOT NULL,
   "fecha_pactada" date NOT NULL,
   "fecha_real" date,
-  "estado_mora" varchar
+  CONSTRAINT "uq_prestamo_ejemplar_fecha" UNIQUE ("ISBN", "num_ejemplar", "fecha_prestamo"),
+  CONSTRAINT "chk_prestamo_fecha_pactada" CHECK ("fecha_pactada" >= "fecha_prestamo"),
+  CONSTRAINT "chk_prestamo_fecha_real" CHECK ("fecha_real" IS NULL OR "fecha_real" >= "fecha_prestamo")
 );
 
-
--- Corregidas las referencias a minúsculas en el esquema 
+-- Claves foráneas
 ALTER TABLE libro ADD FOREIGN KEY ("id_categoria") REFERENCES biblioteca.categoria ("id_categoria") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE usuario ADD FOREIGN KEY ("id_rol") REFERENCES biblioteca.rol ("id_rol") DEFERRABLE INITIALLY IMMEDIATE;
@@ -95,6 +100,35 @@ ALTER TABLE prestamo ADD FOREIGN KEY ("id_usuario") REFERENCES biblioteca.usuari
 ALTER TABLE prestamo ADD FOREIGN KEY ("ISBN", "num_ejemplar") REFERENCES biblioteca.ejemplar ("ISBN", "num_ejemplar") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE prestamo ADD FOREIGN KEY ("id_bibliotecario") REFERENCES biblioteca.usuario ("id_usuario") DEFERRABLE INITIALLY IMMEDIATE;
+
+-- Índice único parcial: impide prestar dos veces un ejemplar con préstamo abierto
+CREATE UNIQUE INDEX "uq_prestamo_abierto_ejemplar"
+  ON biblioteca.prestamo ("ISBN", "num_ejemplar")
+  WHERE "fecha_real" IS NULL;
+
+-- Índices sobre claves foráneas frecuentes (mejora de joins sin redundancia)
+CREATE INDEX "idx_ejemplar_isbn"     ON biblioteca.ejemplar ("ISBN");
+CREATE INDEX "idx_prestamo_ejemplar" ON biblioteca.prestamo ("ISBN", "num_ejemplar");
+CREATE INDEX "idx_prestamo_usuario"  ON biblioteca.prestamo ("id_usuario");
+CREATE INDEX "idx_libro_categoria"   ON biblioteca.libro ("id_categoria");
+
+-- Vista que expone el atributo derivado estado_mora y dias_mora calculados al vuelo
+CREATE VIEW biblioteca.vista_prestamo AS
+SELECT
+  p."id_prestamo",
+  p."ISBN",
+  p."num_ejemplar",
+  p."id_usuario",
+  p."id_bibliotecario",
+  p."fecha_prestamo",
+  p."fecha_pactada",
+  p."fecha_real",
+  GREATEST(0, COALESCE(p."fecha_real", CURRENT_DATE) - p."fecha_pactada") AS "dias_mora",
+  CASE
+    WHEN COALESCE(p."fecha_real", CURRENT_DATE) > p."fecha_pactada" THEN 'Con mora'
+    ELSE 'Sin mora'
+  END AS "estado_mora"
+FROM biblioteca.prestamo p;
 
 -- Inserción inicial de roles del sistema
 INSERT INTO biblioteca.rol ("id_rol", "nombre_rol") VALUES

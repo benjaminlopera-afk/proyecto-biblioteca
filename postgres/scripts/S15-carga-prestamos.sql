@@ -65,29 +65,56 @@ UPDATE carga.stg_prestamo SET motivo = CASE
                                                         THEN 'ejemplar no existe en el catálogo'
     WHEN EXISTS (SELECT 1 FROM biblioteca.prestamo p WHERE p."id_prestamo" = carga.stg_prestamo.id_prestamo)
                                                         THEN 'id_prestamo ya existe en la base de datos'
+    WHEN EXISTS (SELECT 1 FROM biblioteca.prestamo p
+                 WHERE p."ISBN" = carga.stg_prestamo.isbn
+                   AND p."num_ejemplar" = carga.stg_prestamo.num_ejemplar
+                   AND p."fecha_prestamo" = carga.stg_prestamo.fecha_prestamo::date)
+                                                        THEN 'ya existe un préstamo de ese ejemplar en la misma fecha'
+    WHEN fecha_real = ''
+         AND EXISTS (SELECT 1 FROM biblioteca.prestamo p
+                     WHERE p."ISBN" = carga.stg_prestamo.isbn
+                       AND p."num_ejemplar" = carga.stg_prestamo.num_ejemplar
+                       AND p."fecha_real" IS NULL)
+                                                        THEN 'el ejemplar ya tiene un préstamo abierto'
 END;
 
 -- Paso 4. Duplicados dentro del mismo archivo
 UPDATE carga.stg_prestamo s
-SET motivo = 'id_prestamo repetido en el archivo'
-WHERE s.motivo IS NULL
-  AND EXISTS (SELECT 1 FROM carga.stg_prestamo p
-              WHERE p.id_prestamo = s.id_prestamo
-                AND p.motivo IS NULL
-                AND p.linea_csv < s.linea_csv);
+SET motivo = CASE
+    WHEN EXISTS (SELECT 1 FROM carga.stg_prestamo p
+                 WHERE p.id_prestamo = s.id_prestamo
+                   AND p.motivo IS NULL
+                   AND p.linea_csv < s.linea_csv)
+        THEN 'id_prestamo repetido en el archivo'
+    WHEN EXISTS (SELECT 1 FROM carga.stg_prestamo p
+                 WHERE p.isbn = s.isbn
+                   AND p.num_ejemplar = s.num_ejemplar
+                   AND p.fecha_prestamo = s.fecha_prestamo
+                   AND p.motivo IS NULL
+                   AND p.linea_csv < s.linea_csv)
+        THEN 'préstamo duplicado (mismo ejemplar y fecha) en el archivo'
+    WHEN s.fecha_real = ''
+         AND EXISTS (SELECT 1 FROM carga.stg_prestamo p
+                     WHERE p.isbn = s.isbn
+                       AND p.num_ejemplar = s.num_ejemplar
+                       AND p.fecha_real = ''
+                       AND p.motivo IS NULL
+                       AND p.linea_csv < s.linea_csv)
+        THEN 'múltiples préstamos abiertos para el mismo ejemplar en el archivo'
+END
+WHERE s.motivo IS NULL;
 
--- Paso 5. Inserción de filas válidas en biblioteca.prestamo
+-- Paso 5. Inserción de filas válidas en biblioteca.prestamo (sin estado_mora)
 INSERT INTO biblioteca.prestamo ("id_prestamo", "ISBN", "num_ejemplar", "id_usuario", "id_bibliotecario",
-                                 "fecha_prestamo", "fecha_pactada", "fecha_real", "estado_mora")
+                                 "fecha_prestamo", "fecha_pactada", "fecha_real")
 SELECT id_prestamo,
        isbn,
        num_ejemplar,
        documento,
-       'BIBLIO-001', -- Asigna el ID del bibliotecario creado en el Paso 1
+       'BIBLIO-001',
        fecha_prestamo::date,
        fecha_pactada::date,
-       NULLIF(fecha_real, '')::date,
-       NULLIF(estado_mora, '')
+       NULLIF(fecha_real, '')::date
 FROM carga.stg_prestamo
 WHERE motivo IS NULL;
 
