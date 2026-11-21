@@ -154,9 +154,9 @@ FROM carga.stg_libro s
 JOIN biblioteca.autor a ON a.nombre = s.autor
 WHERE s.motivo IS NULL;
 
--- 5e. Ejemplares: ejemplares_disponibles = n  ->  n filas (1..n)
+-- 5e. Ejemplares: ejemplares_disponibles = n  ->  n filas (1..n, condición física inicial 'bueno')
 INSERT INTO biblioteca.ejemplar ("ISBN", num_ejemplar, estado)
-SELECT s.isbn, g.n::text, 'disponible'
+SELECT s.isbn, g.n::text, 'bueno'
 FROM carga.stg_libro s
 CROSS JOIN LATERAL generate_series(1, s.ejemplares_disponibles::integer) AS g(n)
 WHERE s.motivo IS NULL;
