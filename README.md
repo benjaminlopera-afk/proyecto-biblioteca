@@ -79,7 +79,7 @@ docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/li
 # 3. Carga de Préstamos (semilla, errores y propios)
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_semilla.csv -f /scripts/S15-carga-prestamos.sql
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_semilla_con_errores.csv -f /scripts/S15-carga-prestamos.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_propios.csv -f /scripts/S15-carga-prestamos.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/prestamos_propio.csv -f /scripts/S15-carga-prestamos.sql
 ```
 
 Para inspeccionar las filas rechazadas registradas en la bitácora:
